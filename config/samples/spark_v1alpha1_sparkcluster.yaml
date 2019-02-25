@@ -1,0 +1,26 @@
+apiVersion: spark.k8s.io/v1alpha1
+kind: SparkCluster
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+    # app: hadoop-spark-slave
+  name: cluster-1
+spec:
+  # Add fields here
+  slaveNum: 3
+  pvcEnable: False
+  
+  # ports:
+  #   - port: 18080
+  #     name: job
+
+  # resources:
+  #   limits:
+  #     memory: "2000Mi"
+  #   requests:
+  #     memory: "1500Mi"
+
+  nfs:
+    path: /hadoop/share-data
+    server: 114.212.189.141
+
