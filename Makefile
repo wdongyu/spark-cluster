@@ -27,7 +27,6 @@ deploy: manifests
 
 # Undeploy
 undeploy:
-	kubectl delete -f config/crds
 	kustomize build config/default | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.

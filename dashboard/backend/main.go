@@ -13,7 +13,7 @@ import (
 
 const (
 	DefaultFrontendDir string = "dashboard/frontend"
-	DefaultListenPort  int    = 8081
+	DefaultListenPort  int    = 8080
 )
 
 var (
@@ -35,7 +35,7 @@ func main() {
 	http.Handle("/", router)
 
 	p := ":" + strconv.Itoa(listenPort)
-	log.Infof("DLKit server listens on: %v", p)
+	log.Infof("Spark-cluster backend server listens on: %v", p)
 	if err = http.ListenAndServe(p, nil); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}

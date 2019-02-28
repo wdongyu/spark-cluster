@@ -104,7 +104,7 @@ extractQueries:
 				containFiles = append(containFiles, value)
 			case "pattern":
 				restPatterns = append(restPatterns, value)
-			case "name":
+			case "iamashamedtousethedisabledqueryname":
 				packagesNamed = append(packagesNamed, value)
 			case "": // not a reserved query
 				restPatterns = append(restPatterns, pattern)
@@ -120,7 +120,6 @@ extractQueries:
 			}
 		}
 	}
-	patterns = restPatterns
 
 	// TODO(matloob): Remove the definition of listfunc and just use golistPackages once go1.12 is released.
 	var listfunc driver
@@ -139,8 +138,10 @@ extractQueries:
 	response := &responseDeduper{}
 	var err error
 
-	// see if we have any patterns to pass through to go list.
-	if len(restPatterns) > 0 {
+	// See if we have any patterns to pass through to go list. Zero initial
+	// patterns also requires a go list call, since it's the equivalent of
+	// ".".
+	if len(restPatterns) > 0 || len(patterns) == 0 {
 		dr, err := listfunc(cfg, restPatterns...)
 		if err != nil {
 			return nil, err
@@ -282,7 +283,10 @@ func runNamedQueries(cfg *Config, driver driver, response *responseDeduper, quer
 		matchesMu.Lock()
 		defer matchesMu.Unlock()
 
-		path := dir[len(root.Path)+1:]
+		path := dir
+		if dir != root.Path {
+			path = dir[len(root.Path)+1:]
+		}
 		if pathMatchesQueries(path, queries) {
 			switch root.Type {
 			case gopathwalk.RootModuleCache:
@@ -724,9 +728,6 @@ func golistargs(cfg *Config, words []string) []string {
 
 // invokeGo returns the stdout of a go command invocation.
 func invokeGo(cfg *Config, args ...string) (*bytes.Buffer, error) {
-	if debug {
-		defer func(start time.Time) { log.Printf("%s for %v", time.Since(start), cmdDebugStr(cfg, args...)) }(time.Now())
-	}
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
 	cmd := exec.CommandContext(cfg.Context, "go", args...)
@@ -740,6 +741,12 @@ func invokeGo(cfg *Config, args ...string) (*bytes.Buffer, error) {
 	cmd.Dir = cfg.Dir
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	if debug {
+		defer func(start time.Time) {
+			log.Printf("%s for %v, stderr: <<%s>>\n", time.Since(start), cmdDebugStr(cmd, args...), stderr)
+		}(time.Now())
+	}
+
 	if err := cmd.Run(); err != nil {
 		exitErr, ok := err.(*exec.ExitError)
 		if !ok {
@@ -773,12 +780,12 @@ func invokeGo(cfg *Config, args ...string) (*bytes.Buffer, error) {
 	// be useful for debugging. Print them if $GOPACKAGESPRINTGOLISTERRORS
 	// is set.
 	if len(stderr.Bytes()) != 0 && os.Getenv("GOPACKAGESPRINTGOLISTERRORS") != "" {
-		fmt.Fprintf(os.Stderr, "%s stderr: <<%s>>\n", cmdDebugStr(cfg, args...), stderr)
+		fmt.Fprintf(os.Stderr, "%s stderr: <<%s>>\n", cmdDebugStr(cmd, args...), stderr)
 	}
 
 	// debugging
 	if false {
-		fmt.Fprintf(os.Stderr, "%s stdout: <<%s>>\n", cmdDebugStr(cfg, args...), stdout)
+		fmt.Fprintf(os.Stderr, "%s stdout: <<%s>>\n", cmdDebugStr(cmd, args...), stdout)
 	}
 
 	return stdout, nil
@@ -793,13 +800,17 @@ func containsGoFile(s []string) bool {
 	return false
 }
 
-func cmdDebugStr(cfg *Config, args ...string) string {
+func cmdDebugStr(cmd *exec.Cmd, args ...string) string {
 	env := make(map[string]string)
-	for _, kv := range cfg.Env {
+	for _, kv := range cmd.Env {
 		split := strings.Split(kv, "=")
 		k, v := split[0], split[1]
 		env[k] = v
 	}
+	var quotedArgs []string
+	for _, arg := range args {
+		quotedArgs = append(quotedArgs, strconv.Quote(arg))
+	}
 
-	return fmt.Sprintf("GOROOT=%v GOPATH=%v GO111MODULE=%v PWD=%v go %v", env["GOROOT"], env["GOPATH"], env["GO111MODULE"], env["PWD"], args)
+	return fmt.Sprintf("GOROOT=%v GOPATH=%v GO111MODULE=%v PWD=%v go %s", env["GOROOT"], env["GOPATH"], env["GO111MODULE"], env["PWD"], strings.Join(quotedArgs, " "))
 }

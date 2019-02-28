@@ -262,7 +262,7 @@ Suffix:
 // ParseQuantity turns str into a Quantity, or returns an error.
 func ParseQuantity(str string) (Quantity, error) {
 	if len(str) == 0 {
-		return Quantity{}, nil
+		return Quantity{}, ErrFormatWrong
 	}
 	if str == "0" {
 		return Quantity{Format: DecimalSI, s: str}, nil

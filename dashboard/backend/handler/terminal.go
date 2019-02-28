@@ -9,6 +9,7 @@ import (
 	"path"
 
 	sparkclusterv1alpha1 "spark-cluster/pkg/apis/spark/v1alpha1"
+	sparkclustercontroller "spark-cluster/pkg/controller/sparkcluster"
 
 	"github.com/docker/docker/pkg/term"
 	log "github.com/sirupsen/logrus"
@@ -106,7 +107,7 @@ func (handler *APIHandler) CreateTerminal(w http.ResponseWriter, r *http.Request
 	var podList v1.PodList
 	// labels := workspacecontroller.DefaultLabels(workspace)
 	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", "hadoop-spark-master"))
+	opts.SetLabelSelector(fmt.Sprintf("app=%s", sparkclustercontroller.MasterName))
 	opts.InNamespace(Namespace)
 	err = handler.client.List(context.TODO(), opts, &podList)
 	if err != nil {
@@ -121,7 +122,7 @@ func (handler *APIHandler) CreateTerminal(w http.ResponseWriter, r *http.Request
 	t := &Terminal{
 		Namespace: Namespace,
 		Pod:       podList.Items[0],
-		Container: "hadoop-spark-master",
+		Container: sparkclustercontroller.MasterName,
 	}
 
 	tmpl, err := template.ParseFiles(path.Join(handler.frontDir, "terminal.html"))
@@ -204,9 +205,16 @@ func (t *Terminal) exec(command string) error {
 	inFd, _ := term.GetFdInfo(t.conn)
 	state, err := term.SaveState(inFd)
 	if err != nil {
+		fmt.Println("state : ")
+		fmt.Println(err)
 		return err
 	}
+
+	fmt.Println("Run : ")
+
 	return interrupt.Chain(nil, func() {
+		fmt.Println("1 : ")
 		term.RestoreTerminal(inFd, state)
+		fmt.Println("2 : ")
 	}).Run(fn)
 }
