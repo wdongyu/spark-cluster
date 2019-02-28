@@ -52,12 +52,9 @@
   revision = "782f4967f2dc4564575ca782fe2d04090b5faca8"
 
 [[projects]]
-  digest = "1:8da8bb2b12c31c632e96ca6f15666a36c36cd390326b6c5e1c5e309cf4b5419a"
+  digest = "1:f16d0b86a98e56fe05b3ff5a9dd094bf032f172b17532afbc24dcccbe1505f05"
   name = "github.com/docker/docker"
-  packages = [
-    "pkg/term",
-    "pkg/term/windows",
-  ]
+  packages = ["pkg/term/windows"]
   pruneopts = "UT"
   revision = "ebc0750e9fa657ebf5ea08fdeae3242144e784aa"
 
@@ -334,6 +331,14 @@
   pruneopts = "UT"
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:a4397786ea0717e840c2d181aae68742b5f4645d9c6d28202ae9ccfbed33595a"
+  name = "github.com/moby/moby"
+  packages = ["pkg/term"]
+  pruneopts = "UT"
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
 
 [[projects]]
   digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
@@ -1084,8 +1089,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/docker/docker/pkg/term",
     "github.com/gorilla/mux",
+    "github.com/moby/moby/pkg/term",
     "github.com/onsi/gomega",
     "github.com/rs/cors",
     "github.com/sirupsen/logrus",

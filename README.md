@@ -19,13 +19,13 @@ Spark-cluster Operator部署的Hadoop/Spark集群，同时对Hadoop和Spark环�
 	Spark-cluster Operator允许用户指定偏好的参数，然后完成Hadoop/Spark集群的部署，具体的参数包括(*表示必须指定)：
 	- *slaveNum ：集群中应包含的Slave节点数，正整形数值表示
 	
-	- pvcEnable ：是否使用持久化存储，True/False。持久化存储保证了当Master或者Slave意外故障重启时，集群在故障之前所保存的数据依然存在。为避免数据丢失，用户在使用持久化存储的同时，还需要将持久化的内容放置到对应的路径下(Master节点：/root/hdfs/namenode，Slave节点：/root/hdfs/datanode)。默认不使用。
+	- pvcEnable ：是否启用持久化存储(由ceph文件系统进行支持)，True/False。持久化存储保证了当Master或者Slave发生意外故障重启时，集群在故障之前所保存的数据依然存在。为避免数据丢失，用户在启用持久化存储的同时，应将需要持久化的内容放置到HDFS文件系统对应的路径下(Master节点：/root/hdfs/namenode，Slave节点：/root/hdfs/datanode)。默认不使用。
 	
 	- ports ：暴露端口号port(正整形数值)和端口名称name(字符串值)的集合。用户可通过ports参数来对Master中的内部端口进行暴露。在集群中，默认暴露了22、8080、50070、8080和4040端口，分别用于ssh和Hadoop/Spark Web UI访问。
 	
 	- resources ：资源配置，应用于集群中的所有节点。资源包括CPU和内存Memory，配置包括需求量requests和限制量limits。默认不配置。
 	
-	- nfs：使用共享文件夹，指定共享文件夹所在地址server及对应路径path。默认不使用。
+	- nfs：使用共享文件夹功能，指定共享文件夹所在地址server及对应路径path。将server:path下的文件夹挂载到集群中的Master Pod中。默认不使用。
 	
 ```
 apiVersion: spark.k8s.io/v1alpha1

@@ -11,7 +11,7 @@ import (
 	sparkclusterv1alpha1 "spark-cluster/pkg/apis/spark/v1alpha1"
 	sparkclustercontroller "spark-cluster/pkg/controller/sparkcluster"
 
-	"github.com/docker/docker/pkg/term"
+	"github.com/moby/moby/pkg/term"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	v1 "k8s.io/api/core/v1"
