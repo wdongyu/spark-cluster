@@ -82,8 +82,14 @@ required = [
 
 [[constraint]]
   name = "github.com/docker/docker"
+  # branch = "master"
   revision = "ebc0750e9fa657ebf5ea08fdeae3242144e784aa"
 
 [prune]
   go-tests = true
-  unused-packages = true
+  non-go = true
+  # unused-packages = true
+
+  [[prune.project]]
+    name = "k8s.io/code-generator"
+    non-go = false
