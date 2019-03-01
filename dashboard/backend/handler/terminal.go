@@ -203,18 +203,9 @@ func (t *Terminal) exec(command string) error {
 	}
 
 	inFd, _ := term.GetFdInfo(t.conn)
-	state, err := term.SaveState(inFd)
-	if err != nil {
-		fmt.Println("state : ")
-		fmt.Println(err)
-		return err
-	}
-
-	fmt.Println("Run : ")
+	state, _ := term.SaveState(inFd)
 
 	return interrupt.Chain(nil, func() {
-		fmt.Println("1 : ")
 		term.RestoreTerminal(inFd, state)
-		fmt.Println("2 : ")
 	}).Run(fn)
 }
