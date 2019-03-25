@@ -47,15 +47,41 @@ type SparkClusterSpec struct {
 	Ports     []corev1.ServicePort        `json:"ports,omitempty"`
 	PvcEnable bool                        `json:"pvcEnable,omitempty"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
-	NFS       corev1.NFSVolumeSource      `json:"nfs,omitempty"`
+	NFS       bool                        `json:"nfs,omitempty"`
 }
+
+// SparkClusterPhase defines all phase of SparkCluster lifecycle.
+type SparkClusterPhase string
+
+const (
+	// SparkClusterPhasePending means one or some of the containers, storages,
+	// or services are creating.
+	SparkClusterPhasePending = "Pending"
+
+	// SparkClusterPhaseRunning means SparkCluster have been successfully scheduled and launched
+	// and it is running without error.
+	SparkClusterPhaseRunning = "Running"
+
+	// SparkClusterPhaseFailed means some pods of SparkCluster have failed.
+	SparkClusterPhaseFailed = "Failed"
+)
 
 // SparkClusterStatus defines the observed state of SparkCluster
 type SparkClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	AvailableReplicas int32 `json:"availableReplicas"`
+	// Phase show the running phase of SparkCluster.
+	Phase SparkClusterPhase `json:"phase"`
+
+	// CreateTime represents time when the SparkCluster was created.
+	CreateTime *metav1.Time `json:"createTime,omitempty"`
+
+	// Endpoints for pods
+	Endpoints map[string]string `json:"endpoints,omitempty"`
+
+	// Exposed Port for UI
+	ExposedPorts []corev1.ServicePort `json:"exposedPorts,omitempty"`
 }
 
 // +genclient

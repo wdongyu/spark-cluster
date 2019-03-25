@@ -41,10 +41,12 @@ var log = logf.Log.WithName("controller")
 
 // Const Variable
 const (
-	MasterName = "hadoop-spark-master"
-	MasterPvc  = "namenode-pvc"
-	SlaveName  = "hadoop-spark-slave"
-	SlavePvc   = "datanode-pvc"
+	MasterName  = "hadoop-spark-master"
+	MasterPvc   = "namenode-pvc"
+	SlaveName   = "hadoop-spark-slave"
+	SlavePvc    = "datanode-pvc"
+	UIService   = "hadoop-ui-service"
+	ShareServer = "114.212.189.141"
 )
 
 /**
@@ -162,29 +164,6 @@ func (r *ReconcileSparkCluster) Reconcile(request reconcile.Request) (reconcile.
 	expectNum := instance.Spec.SlaveNum
 
 	// TODO(user): Change this to be the object type created by your controller
-	// Define the desired Deployment object
-	// deploy := &appsv1.Deployment{
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:      instance.Name + "-deployment",
-	// 		Namespace: instance.Namespace,
-	// 	},
-	// 	Spec: appsv1.DeploymentSpec{
-	// 		Selector: &metav1.LabelSelector{
-	// 			MatchLabels: map[string]string{"deployment": instance.Name + "-deployment"},
-	// 		},
-	// 		Template: corev1.PodTemplateSpec{
-	// 			ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{"deployment": instance.Name + "-deployment"}},
-	// 			Spec: corev1.PodSpec{
-	// 				Containers: []corev1.Container{
-	// 					{
-	// 						Name:  "nginx",
-	// 						Image: "nginx",
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
 
 	// Master
 	if instance.Spec.PvcEnable {
@@ -254,7 +233,7 @@ func (r *ReconcileSparkCluster) Reconcile(request reconcile.Request) (reconcile.
 		}
 	}
 
-	return reconcile.Result{}, nil
+	return reconcile.Result{}, r.updateStatus(instance)
 }
 
 func (r *ReconcileSparkCluster) checkPvc(instance *sparkv1alpha1.SparkCluster, deploy *corev1.PersistentVolumeClaim) error {

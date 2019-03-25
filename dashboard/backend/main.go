@@ -13,7 +13,7 @@ import (
 
 const (
 	DefaultFrontendDir string = "dashboard/frontend"
-	DefaultListenPort  int    = 8080
+	DefaultListenPort  int    = 8081
 )
 
 var (

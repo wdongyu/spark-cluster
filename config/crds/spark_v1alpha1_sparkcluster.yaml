@@ -29,7 +29,7 @@ spec:
         spec:
           properties:
             nfs:
-              type: object
+              type: boolean
             ports:
               items:
                 type: object
@@ -47,11 +47,23 @@ spec:
           type: object
         status:
           properties:
-            availableReplicas:
-              format: int32
-              type: integer
+            createTime:
+              description: CreateTime represents time when the SparkCluster was created.
+              format: date-time
+              type: string
+            endpoints:
+              description: Endpoints for pods
+              type: object
+            exposedPorts:
+              description: Exposed Port for UI
+              items:
+                type: object
+              type: array
+            phase:
+              description: Phase show the running phase of SparkCluster.
+              type: string
           required:
-          - availableReplicas
+          - phase
           type: object
   version: v1alpha1
 status:

@@ -12,7 +12,9 @@ import (
 func (r *ReconcileSparkCluster) getMasterPod(instance *sparkv1alpha1.SparkCluster) *corev1.Pod {
 	var volumeMounts []corev1.VolumeMount
 	var volumes []corev1.Volume
-	if nfs := instance.Spec.NFS; nfs.Path != "" {
+
+	if instance.Spec.NFS {
+		nfs := corev1.NFSVolumeSource{Server: ShareServer, Path: "/hadoop/share-dir"}
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{Name: "share-dir", MountPath: nfs.Path})
 		volumes = append(volumes, corev1.Volume{Name: "share-dir", VolumeSource: corev1.VolumeSource{NFS: &nfs}})
 	}
@@ -133,6 +135,10 @@ func (r *ReconcileSparkCluster) getUIService(instance *sparkv1alpha1.SparkCluste
 			Port: 22,
 		},
 		{
+			Name: "hdfs-client",
+			Port: 9000,
+		},
+		{
 			Name: "resource-manager",
 			Port: 8088,
 		},
@@ -193,7 +199,7 @@ func (r *ReconcileSparkCluster) getSlaveService(instance *sparkv1alpha1.SparkClu
 }
 
 func (r *ReconcileSparkCluster) getMasterPvc(instance *sparkv1alpha1.SparkCluster) *corev1.PersistentVolumeClaim {
-	storageClassName := "rook-ceph-block"
+	storageClassName := "cephfs"
 	accessModes := make([]corev1.PersistentVolumeAccessMode, 1)
 	accessModes[0] = corev1.ReadWriteOnce
 	resourceList := corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("20Gi")}
@@ -213,7 +219,7 @@ func (r *ReconcileSparkCluster) getMasterPvc(instance *sparkv1alpha1.SparkCluste
 }
 
 func (r *ReconcileSparkCluster) getSlavePvc(instance *sparkv1alpha1.SparkCluster, index int) *corev1.PersistentVolumeClaim {
-	storageClassName := "rook-ceph-block"
+	storageClassName := "cephfs"
 	accessModes := make([]corev1.PersistentVolumeAccessMode, 1)
 	accessModes[0] = corev1.ReadWriteOnce
 	q := resource.MustParse("20Gi")
