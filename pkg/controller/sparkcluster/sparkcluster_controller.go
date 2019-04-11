@@ -39,16 +39,6 @@ import (
 
 var log = logf.Log.WithName("controller")
 
-// Const Variable
-const (
-	MasterName  = "hadoop-spark-master"
-	MasterPvc   = "namenode-pvc"
-	SlaveName   = "hadoop-spark-slave"
-	SlavePvc    = "datanode-pvc"
-	UIService   = "hadoop-ui-service"
-	ShareServer = "114.212.189.141"
-)
-
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
 * business logic.  Delete these comments after modifying this file.*
@@ -153,7 +143,7 @@ func (r *ReconcileSparkCluster) Reconcile(request reconcile.Request) (reconcile.
 	}
 
 	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", SlaveName))
+	opts.SetLabelSelector(fmt.Sprintf("app=%s", instance.Spec.ClusterPrefix+"-slave"))
 	opts.InNamespace(request.NamespacedName.Namespace)
 	podList := &corev1.PodList{}
 	err = r.List(context.TODO(), opts, podList)
@@ -189,19 +179,19 @@ func (r *ReconcileSparkCluster) Reconcile(request reconcile.Request) (reconcile.
 	if foundNum > expectNum {
 		for i := foundNum; i > expectNum; i-- {
 			pod := &corev1.Pod{}
-			err := r.Get(context.TODO(), types.NamespacedName{Name: SlaveName + "-" + fmt.Sprintf("%d", i), Namespace: instance.Namespace}, pod)
+			err := r.Get(context.TODO(), types.NamespacedName{Name: slaveName(instance, i), Namespace: instance.Namespace}, pod)
 			if err != nil && !errors.IsNotFound(err) {
 				return reconcile.Result{}, err
 			}
-			log.Info("Deleting Pod", "namespace", instance.Namespace, "name", SlaveName+"-"+fmt.Sprintf("%d", i))
+			log.Info("Deleting Pod", "namespace", instance.Namespace, "name", slaveName(instance, i))
 			r.Delete(context.TODO(), pod)
 
 			svc := &corev1.Service{}
-			err = r.Get(context.TODO(), types.NamespacedName{Name: SlaveName + "-" + fmt.Sprintf("%d", i), Namespace: instance.Namespace}, svc)
+			err = r.Get(context.TODO(), types.NamespacedName{Name: slaveName(instance, i), Namespace: instance.Namespace}, svc)
 			if err != nil && !errors.IsNotFound(err) {
 				return reconcile.Result{}, err
 			}
-			log.Info("Deleting Service", "namespace", instance.Namespace, "name", SlaveName+"-"+fmt.Sprintf("%d", i))
+			log.Info("Deleting Service", "namespace", instance.Namespace, "name", slaveName(instance, i))
 			r.Delete(context.TODO(), svc)
 
 			if instance.Spec.PvcEnable {

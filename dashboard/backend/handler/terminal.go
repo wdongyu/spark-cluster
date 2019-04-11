@@ -52,6 +52,7 @@ func (t *Terminal) Read(p []byte) (int, error) {
 	var reply string
 	var msg map[string]uint16
 	reply, err := t.conn.Recv()
+
 	if err != nil {
 		return 0, err
 	}

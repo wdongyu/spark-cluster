@@ -138,7 +138,7 @@ metadata:
   namespace: system
 spec:
   rules:
-  - host: sparkcluster.nju.edu.cn
+  - host: 114.212.189.141
     http:
       paths:
       - backend:

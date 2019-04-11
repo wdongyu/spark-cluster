@@ -21,21 +21,21 @@ func (r *ReconcileSparkCluster) getMasterPod(instance *sparkv1alpha1.SparkCluste
 
 	if instance.Spec.PvcEnable {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{Name: "dfs", MountPath: "/root/hdfs/namenode"})
-		pvc := corev1.PersistentVolumeClaimVolumeSource{ClaimName: MasterPvc}
+		pvc := corev1.PersistentVolumeClaimVolumeSource{ClaimName: masterPvc(instance)}
 		volumes = append(volumes, corev1.Volume{Name: "dfs", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &pvc}})
 	}
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      MasterName,
+			Name:      masterName(instance),
 			Namespace: instance.Namespace,
-			Labels:    map[string]string{"app": MasterName},
+			Labels:    masterLabel(instance),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:            MasterName,
-					Image:           "registry.njuics.cn/wdongyu/spark_master_on_kube:0.2",
+					Name:            Master,
+					Image:           MasterImage,
 					Command:         []string{"bash", "-c", "/etc/master-bootstrap.sh " + fmt.Sprintf("%d", instance.Spec.SlaveNum)},
 					ImagePullPolicy: "IfNotPresent",
 					Ports: []corev1.ContainerPort{
@@ -49,6 +49,7 @@ func (r *ReconcileSparkCluster) getMasterPod(instance *sparkv1alpha1.SparkCluste
 							ContainerPort: 50470,
 						},
 					},
+					Env:          []corev1.EnvVar{{Name: "PREFIX", Value: instance.Spec.ClusterPrefix}},
 					Resources:    instance.Spec.Resources,
 					VolumeMounts: volumeMounts,
 				},
@@ -63,20 +64,20 @@ func (r *ReconcileSparkCluster) getSlavePod(instance *sparkv1alpha1.SparkCluster
 	var volumes []corev1.Volume
 	if instance.Spec.PvcEnable {
 		volumeMounts = []corev1.VolumeMount{{Name: "dfs", MountPath: "/root/hdfs/datanode"}}
-		pvc := corev1.PersistentVolumeClaimVolumeSource{ClaimName: SlavePvc + "-" + fmt.Sprintf("%d", index)}
+		pvc := corev1.PersistentVolumeClaimVolumeSource{ClaimName: slavePvc(instance, index)}
 		volumes = []corev1.Volume{{Name: "dfs", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &pvc}}}
 	}
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      SlaveName + "-" + fmt.Sprintf("%d", index),
+			Name:      slaveName(instance, index),
 			Namespace: instance.Namespace,
-			Labels:    map[string]string{"app": SlaveName + "-" + fmt.Sprintf("%d", index)},
+			Labels:    slaveLabel(instance, index),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:            SlaveName,
-					Image:           "registry.njuics.cn/wdongyu/spark_slave_on_kube:0.2",
+					Name:            Slave,
+					Image:           SlaveImage,
 					ImagePullPolicy: "IfNotPresent",
 					Ports: []corev1.ContainerPort{
 						{
@@ -92,6 +93,7 @@ func (r *ReconcileSparkCluster) getSlavePod(instance *sparkv1alpha1.SparkCluster
 							ContainerPort: 50475,
 						},
 					},
+					Env:          []corev1.EnvVar{{Name: "PREFIX", Value: instance.Spec.ClusterPrefix}},
 					Resources:    instance.Spec.Resources,
 					VolumeMounts: volumeMounts,
 				},
@@ -104,7 +106,7 @@ func (r *ReconcileSparkCluster) getSlavePod(instance *sparkv1alpha1.SparkCluster
 func (r *ReconcileSparkCluster) getMasterService(instance *sparkv1alpha1.SparkCluster) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      MasterName,
+			Name:      masterName(instance),
 			Namespace: instance.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
@@ -123,7 +125,7 @@ func (r *ReconcileSparkCluster) getMasterService(instance *sparkv1alpha1.SparkCl
 					Port: 50470,
 				},
 			},
-			Selector: map[string]string{"app": MasterName},
+			Selector: masterLabel(instance),
 		},
 	}
 }
@@ -160,18 +162,18 @@ func (r *ReconcileSparkCluster) getUIService(instance *sparkv1alpha1.SparkCluste
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "hadoop-ui-service",
 			Namespace: instance.Namespace,
-			Labels:    map[string]string{"app": MasterName},
+			Labels:    masterLabel(instance),
 		},
 		Spec: corev1.ServiceSpec{
 			Type:     "NodePort",
 			Ports:    ports,
-			Selector: map[string]string{"app": MasterName},
+			Selector: masterLabel(instance),
 		},
 	}
 }
 
 func (r *ReconcileSparkCluster) getSlaveService(instance *sparkv1alpha1.SparkCluster, index int) *corev1.Service {
-	serviceName := SlaveName + "-" + fmt.Sprintf("%d", index)
+	serviceName := slaveName(instance, index)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
@@ -199,7 +201,7 @@ func (r *ReconcileSparkCluster) getSlaveService(instance *sparkv1alpha1.SparkClu
 }
 
 func (r *ReconcileSparkCluster) getMasterPvc(instance *sparkv1alpha1.SparkCluster) *corev1.PersistentVolumeClaim {
-	storageClassName := "cephfs"
+	storageClassName := StorageClassName
 	accessModes := make([]corev1.PersistentVolumeAccessMode, 1)
 	accessModes[0] = corev1.ReadWriteOnce
 	resourceList := corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("20Gi")}
@@ -208,7 +210,7 @@ func (r *ReconcileSparkCluster) getMasterPvc(instance *sparkv1alpha1.SparkCluste
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      MasterPvc,
 			Namespace: instance.Namespace,
-			Labels:    map[string]string{"app": MasterName},
+			Labels:    masterLabel(instance),
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			StorageClassName: &storageClassName,
@@ -219,7 +221,7 @@ func (r *ReconcileSparkCluster) getMasterPvc(instance *sparkv1alpha1.SparkCluste
 }
 
 func (r *ReconcileSparkCluster) getSlavePvc(instance *sparkv1alpha1.SparkCluster, index int) *corev1.PersistentVolumeClaim {
-	storageClassName := "cephfs"
+	storageClassName := StorageClassName
 	accessModes := make([]corev1.PersistentVolumeAccessMode, 1)
 	accessModes[0] = corev1.ReadWriteOnce
 	q := resource.MustParse("20Gi")
@@ -227,9 +229,9 @@ func (r *ReconcileSparkCluster) getSlavePvc(instance *sparkv1alpha1.SparkCluster
 
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      SlavePvc + "-" + fmt.Sprintf("%d", index),
+			Name:      slavePvc(instance, index),
 			Namespace: instance.Namespace,
-			Labels:    map[string]string{"app": SlaveName + "-" + fmt.Sprintf("%d", index)},
+			Labels:    slaveLabel(instance, index),
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			StorageClassName: &storageClassName,

@@ -19,7 +19,7 @@ func (handler *APIHandler) ListSparkCluster(w http.ResponseWriter, r *http.Reque
 	sc := new(sparkclusterv1alpha1.SparkClusterList)
 
 	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", "hadoop-spark-cluster"))
+	opts.SetLabelSelector(fmt.Sprintf("app=%s", "prefix-cluster"))
 	opts.InNamespace(Namespace)
 	err := handler.client.List(context.TODO(), opts, sc)
 

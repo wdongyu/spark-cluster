@@ -43,11 +43,12 @@ type SparkClusterSpec struct {
 
 	// PodName  string `json:"podName"`
 	// Replicas *int32 `json:"replicas"`
-	SlaveNum  int                         `json:"slaveNum"`
-	Ports     []corev1.ServicePort        `json:"ports,omitempty"`
-	PvcEnable bool                        `json:"pvcEnable,omitempty"`
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
-	NFS       bool                        `json:"nfs,omitempty"`
+	ClusterPrefix string                      `json:"clusterPrefix"`
+	SlaveNum      int                         `json:"slaveNum"`
+	Ports         []corev1.ServicePort        `json:"ports,omitempty"`
+	PvcEnable     bool                        `json:"pvcEnable,omitempty"`
+	Resources     corev1.ResourceRequirements `json:"resources,omitempty"`
+	NFS           bool                        `json:"nfs,omitempty"`
 }
 
 // SparkClusterPhase defines all phase of SparkCluster lifecycle.

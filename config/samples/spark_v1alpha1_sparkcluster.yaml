@@ -2,10 +2,11 @@ apiVersion: spark.k8s.io/v1alpha1
 kind: SparkCluster
 metadata:
   labels:
-    app: hadoop-spark-cluster
-  name: cluster-1
+    app: user-cluster
+  name: user-cluster
 spec:
   # Add fields here
+  clusterPrefix: user
   slaveNum: 3
   pvcEnable: False
   

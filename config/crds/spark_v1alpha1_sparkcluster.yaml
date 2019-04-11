@@ -28,6 +28,9 @@ spec:
           type: object
         spec:
           properties:
+            clusterPrefix:
+              description: PodName  string `json:"podName"` Replicas *int32 `json:"replicas"`
+              type: string
             nfs:
               type: boolean
             ports:
@@ -39,10 +42,10 @@ spec:
             resources:
               type: object
             slaveNum:
-              description: PodName  string `json:"podName"` Replicas *int32 `json:"replicas"`
               format: int64
               type: integer
           required:
+          - clusterPrefix
           - slaveNum
           type: object
         status:

@@ -2,7 +2,6 @@ package sparkcluster
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"spark-cluster/pkg/apis/spark/v1alpha1"
 	sparkv1alpha1 "spark-cluster/pkg/apis/spark/v1alpha1"
@@ -80,9 +79,9 @@ func (r *ReconcileSparkCluster) updateEndpoints(instance *v1alpha1.SparkCluster,
 	var podName string
 	for i, pod := range pods {
 		if i == 0 {
-			podName = MasterName
+			podName = masterName(instance)
 		} else {
-			podName = SlaveName + "-" + fmt.Sprintf("%d", i)
+			podName = slaveName(instance, i)
 		}
 		instance.Status.Endpoints[podName] = pod.Status.PodIP
 	}
@@ -95,7 +94,7 @@ func PodsForLabels(instance *sparkv1alpha1.SparkCluster, c client.Client) ([]cor
 	pods := make([]corev1.Pod, instance.Spec.SlaveNum+1)
 
 	masterPod := &corev1.Pod{}
-	err := c.Get(context.TODO(), types.NamespacedName{Name: MasterName, Namespace: instance.Namespace}, masterPod)
+	err := c.Get(context.TODO(), types.NamespacedName{Name: masterName(instance), Namespace: instance.Namespace}, masterPod)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +103,7 @@ func PodsForLabels(instance *sparkv1alpha1.SparkCluster, c client.Client) ([]cor
 
 	for i := 1; i <= instance.Spec.SlaveNum; i++ {
 		pod := &corev1.Pod{}
-		err := c.Get(context.TODO(), types.NamespacedName{Name: SlaveName + "-" + fmt.Sprintf("%d", i), Namespace: instance.Namespace}, pod)
+		err := c.Get(context.TODO(), types.NamespacedName{Name: slaveName(instance, i), Namespace: instance.Namespace}, pod)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +118,7 @@ func ServicesForLabels(instance *sparkv1alpha1.SparkCluster, c client.Client) ([
 	services := make([]corev1.Service, instance.Spec.SlaveNum+2)
 
 	masterService := &corev1.Service{}
-	err := c.Get(context.TODO(), types.NamespacedName{Name: MasterName, Namespace: instance.Namespace}, masterService)
+	err := c.Get(context.TODO(), types.NamespacedName{Name: masterName(instance), Namespace: instance.Namespace}, masterService)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +133,7 @@ func ServicesForLabels(instance *sparkv1alpha1.SparkCluster, c client.Client) ([
 
 	for i := 1; i <= instance.Spec.SlaveNum; i++ {
 		service := &corev1.Service{}
-		err := c.Get(context.TODO(), types.NamespacedName{Name: SlaveName + "-" + fmt.Sprintf("%d", i), Namespace: instance.Namespace}, service)
+		err := c.Get(context.TODO(), types.NamespacedName{Name: slaveName(instance, i), Namespace: instance.Namespace}, service)
 		if err != nil {
 			return nil, err
 		}

@@ -44,6 +44,12 @@ func NewRouter(handler *APIHandler) http.Handler {
 			"/apis/file",
 			handler.UploadFile,
 		},
+		{
+			"GetLog",
+			"GET",
+			"/apis/log",
+			handler.GetLog,
+		},
 	}
 
 	// The public route is always accessible
