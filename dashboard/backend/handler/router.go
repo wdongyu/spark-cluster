@@ -38,17 +38,29 @@ func NewRouter(handler *APIHandler) http.Handler {
 			"/apis/terminal",
 			handler.CreateTerminal,
 		},
-		{
-			"UploadFile",
-			"GET",
-			"/apis/file",
-			handler.UploadFile,
-		},
+		// {
+		// 	"UploadFile",
+		// 	"GET",
+		// 	"/apis/file",
+		// 	handler.UploadFile,
+		// },
 		{
 			"GetLog",
 			"GET",
 			"/apis/log",
 			handler.GetLog,
+		},
+		{
+			"GetPodLog",
+			"GET",
+			"/apis/pod_log",
+			handler.GetPodLog,
+		},
+		{
+			"GetDroneLog",
+			"GET",
+			"/apis/drone_log",
+			handler.GetDroneLog,
 		},
 	}
 

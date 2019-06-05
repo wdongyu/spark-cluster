@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bdkit-backend
+  labels:
+    app.kubernetes.io/name: bdkit-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bdkit-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bdkit-backend
+    spec:
+      serviceAccountName: bdkit
+      containers:
+      - name: bdkit-backend
+        image: "registry.njuics.cn/wdongyu/spark-cluster-operator:debugv1.1"
+        imagePullPolicy: Always
+        command: ["/backend","-frontend-dir","frontend"]
+        env:
+        - name: RESOURCES_NAMESPACE
+          value: "bdkit"
+        - name: OAUTH_PROVIDER
+          value: "oauth"
+        - name: LOG_DRIVER
+          value: "native"
+        ports:
+        - name: http
+          containerPort: 8081

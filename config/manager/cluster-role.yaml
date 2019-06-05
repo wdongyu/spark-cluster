@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: bdkit
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - deployments/status
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  - pods/status
+  - pods/log
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - secrets
+  - services
+  verbs:
+  - '*'
+- apiGroups:
+  - spark.k8s.io
+  resources:
+  - sparkclusters
+  - sparkclusters/status
+  verbs:
+  - '*'

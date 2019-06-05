@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -11,17 +10,20 @@ import (
 
 	sparkclusterv1alpha1 "spark-cluster/pkg/apis/spark/v1alpha1"
 
+	"spark-cluster/pkg/controller/sparkcluster"
+
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (handler *APIHandler) ListSparkCluster(w http.ResponseWriter, r *http.Request) {
-	sc := new(sparkclusterv1alpha1.SparkClusterList)
+	user := r.Header.Get("User")
 
-	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", "prefix-cluster"))
-	opts.InNamespace(Namespace)
-	err := handler.client.List(context.TODO(), opts, sc)
+	sc := &sparkclusterv1alpha1.SparkClusterList{}
+	err := handler.client.List(context.TODO(),
+		&client.ListOptions{
+			LabelSelector: sparkcluster.SelectorForUser(user),
+		}, sc)
 
 	if err != nil {
 		log.Warningf("failed to list spark cluster: %v", err)
@@ -33,7 +35,13 @@ func (handler *APIHandler) ListSparkCluster(w http.ResponseWriter, r *http.Reque
 
 func (handler *APIHandler) CreateSparkCluster(w http.ResponseWriter, r *http.Request) {
 	sc := new(sparkclusterv1alpha1.SparkCluster)
-	// user := r.Header.Get("User")
+	user := r.Header.Get("User")
+
+	if len(sc.Namespace) == 0 {
+		sc.Namespace = handler.resourcesNamespace
+	}
+	sc.Spec.Owner = user
+	sparkcluster.AddUserLabel(ws, user)
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -48,7 +56,7 @@ func (handler *APIHandler) CreateSparkCluster(w http.ResponseWriter, r *http.Req
 	}
 
 	if len(sc.Namespace) == 0 {
-		sc.Namespace = Namespace
+		sc.Namespace = handler.resourcesNamespace
 	}
 	// workspace.AddUserLabel(ws, user)
 

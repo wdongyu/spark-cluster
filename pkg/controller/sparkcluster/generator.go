@@ -29,7 +29,7 @@ func (r *ReconcileSparkCluster) getMasterPod(instance *sparkv1alpha1.SparkCluste
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      masterName(instance),
 			Namespace: instance.Namespace,
-			Labels:    masterLabel(instance),
+			Labels:    GetMasterLabel(instance),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -71,7 +71,7 @@ func (r *ReconcileSparkCluster) getSlavePod(instance *sparkv1alpha1.SparkCluster
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      slaveName(instance, index),
 			Namespace: instance.Namespace,
-			Labels:    slaveLabel(instance, index),
+			Labels:    GetSlaveLabel(instance, index),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -125,7 +125,7 @@ func (r *ReconcileSparkCluster) getMasterService(instance *sparkv1alpha1.SparkCl
 					Port: 50470,
 				},
 			},
-			Selector: masterLabel(instance),
+			Selector: GetMasterLabel(instance),
 		},
 	}
 }
@@ -160,14 +160,14 @@ func (r *ReconcileSparkCluster) getUIService(instance *sparkv1alpha1.SparkCluste
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "hadoop-ui-service",
+			Name:      instance.Spec.ClusterPrefix + "-ui-service",
 			Namespace: instance.Namespace,
-			Labels:    masterLabel(instance),
+			Labels:    GetMasterLabel(instance),
 		},
 		Spec: corev1.ServiceSpec{
 			Type:     "NodePort",
 			Ports:    ports,
-			Selector: masterLabel(instance),
+			Selector: GetMasterLabel(instance),
 		},
 	}
 }
@@ -210,7 +210,7 @@ func (r *ReconcileSparkCluster) getMasterPvc(instance *sparkv1alpha1.SparkCluste
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      MasterPvc,
 			Namespace: instance.Namespace,
-			Labels:    masterLabel(instance),
+			Labels:    GetMasterLabel(instance),
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			StorageClassName: &storageClassName,
@@ -231,7 +231,7 @@ func (r *ReconcileSparkCluster) getSlavePvc(instance *sparkv1alpha1.SparkCluster
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      slavePvc(instance, index),
 			Namespace: instance.Namespace,
-			Labels:    slaveLabel(instance, index),
+			Labels:    GetSlaveLabel(instance, index),
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			StorageClassName: &storageClassName,

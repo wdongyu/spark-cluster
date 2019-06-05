@@ -138,7 +138,7 @@ metadata:
   namespace: system
 spec:
   rules:
-  - host: 114.212.189.141
+  - host: bdkit.nju.edu.cn
     http:
       paths:
       - backend:

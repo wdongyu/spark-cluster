@@ -6,6 +6,7 @@ metadata:
   name: user-cluster
 spec:
   # Add fields here
+  gitRepo: https://github.com/wdongyu/wordcount.git
   clusterPrefix: user
   slaveNum: 3
   pvcEnable: False

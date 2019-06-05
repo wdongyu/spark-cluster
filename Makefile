@@ -12,6 +12,9 @@ test: generate fmt vet manifests
 manager: generate fmt vet
 	go build -o bin/manager spark-cluster/cmd/manager
 
+sparkctl: generate fmt vet
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/sparkctl spark-cluster/cmd/sparkctl
+
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
 	go run ./cmd/manager/main.go

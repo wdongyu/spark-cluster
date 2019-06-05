@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"path"
 
 	sparkclusterv1alpha1 "spark-cluster/pkg/apis/spark/v1alpha1"
@@ -89,7 +90,7 @@ func (handler *APIHandler) CreateTerminal(w http.ResponseWriter, r *http.Request
 		responseJSON(Message{"Missing required field \"sparkcluster\""}, w, http.StatusInternalServerError)
 		return
 	}
-	namespace := Namespace
+	namespace := handler.resourcesNamespace
 
 	// Get sparkcluster according to path parameter.
 	sparkcluster := &sparkclusterv1alpha1.SparkCluster{}
@@ -103,14 +104,15 @@ func (handler *APIHandler) CreateTerminal(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Get pods which belong to this workspace
+	// Get pods which belong to this sparkcluster
 	// Use the first pod as terminal pod.
 	var podList v1.PodList
 	// labels := workspacecontroller.DefaultLabels(workspace)
-	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", sparkclustercontroller.MasterName))
-	opts.InNamespace(Namespace)
-	err = handler.client.List(context.TODO(), opts, &podList)
+	// opts := &client.ListOptions{}
+	// opts.SetLabelSelector(fmt.Sprintf("app=%s", sparkclustercontroller.GetMasterLabel(sparkcluster)))
+	// opts.InNamespace(Namespace)
+	err = handler.client.List(context.TODO(), client.InNamespace(namespace).
+		MatchingLabels(sparkclustercontroller.GetMasterLabel(sparkcluster)), &podList)
 	if err != nil {
 		responseJSON(Message{err.Error()}, w, http.StatusInternalServerError)
 		return
@@ -121,9 +123,9 @@ func (handler *APIHandler) CreateTerminal(w http.ResponseWriter, r *http.Request
 	}
 
 	t := &Terminal{
-		Namespace: Namespace,
+		Namespace: namespace,
 		Pod:       podList.Items[0],
-		Container: sparkclustercontroller.MasterName,
+		Container: sparkclustercontroller.Master,
 	}
 
 	tmpl, err := template.ParseFiles(path.Join(handler.frontDir, "terminal.html"))
@@ -142,7 +144,7 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pod, err := t.kubeClient.CoreV1().Pods(Namespace).Get(podName[0], metav1.GetOptions{}); err != nil {
+	if pod, err := t.kubeClient.CoreV1().Pods(t.Namespace).Get(podName[0], metav1.GetOptions{}); err != nil {
 		responseJSON(Message{err.Error()}, w, http.StatusInternalServerError)
 		return
 	} else {
@@ -173,7 +175,10 @@ func (t *Terminal) exec(command string) error {
 			Param("stdin", "true").
 			Param("stdout", "true").
 			Param("stderr", "true").
-			Param("command", command).Param("tty", "true")
+			Param("command", command).
+			Param("tty", "true") //.
+			// Param("command", "cat").
+			// Param("command", "/root/start.sh")
 		req.VersionedParams(
 			&v1.PodExecOptions{
 				Container: t.Container,
@@ -192,6 +197,9 @@ func (t *Terminal) exec(command string) error {
 		if err != nil {
 			return err
 		}
+
+		os.Stdout.Sync()
+		os.Stderr.Sync()
 
 		// Connect this process' terminal to the remote shell process.
 		return executor.Stream(remotecommand.StreamOptions{
